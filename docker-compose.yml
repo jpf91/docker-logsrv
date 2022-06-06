@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  journal:
+    image: "docker.io/library/journal-remote:latest"
+    restart: unless-stopped
+    hostname: "journal"
+    volumes:
+      - ./data/journal:/var/log/journal/remote:Z
+    ports:
+      - "19532:19532"
+
+  syslog:
+    image: "docker.io/library/rsyslog-journal:latest"
+    restart: unless-stopped
+    hostname: "syslog"
+    depends_on:
+      - journal
+    ports:
+      - "514:514"
+      - "6514:6514"
+      - "514:514/udp"
+#    volumes:
+#      - ".data/rsyslog.ca.pem:/etc/rsyslog.ca.pem"
+#      - ".data/rsyslog.key.pem:/etc/rsyslog.key.pem"
+#      - ".data/rsyslog.cert.pem:/etc/rsyslog.cert.pem"
+
+  cockpit:
+    image: "docker.io/library/cockpit-journal:latest"
+    restart: unless-stopped
+    hostname: "cockpit"
+    environment:
+      ROOT_PASSWORD: "foo"
+    volumes:
+      - "./data/journal:/var/log/journal/remote:Z"
+    ports:
+      - "9090:9090"

@@ -1,0 +1,38 @@
+name: publish
+on: [push]
+
+jobs:
+  publish-image:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: GitHub Container Registry Login
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: cockpit-journal Image Build
+      run: |
+        if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        echo "Building jpf91/cockpit-journal:$TAG_NAME"
+        docker build . --tag ghcr.io/jpf91/cockpit-journal:$TAG_NAME
+        docker push ghcr.io/jpf91/cockpit-journal:$TAG_NAME
+
+    - name: journal-remote Image Build
+      run: |
+        if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        echo "Building jpf91/journal-remote:$TAG_NAME"
+        docker build . --tag ghcr.io/jpf91/journal-remote:$TAG_NAME
+        docker push ghcr.io/jpf91/journal-remote:$TAG_NAME
+
+    - name: rsyslog-journal Image Build
+      run: |
+        if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        echo "Building jpf91/rsyslog-journal:$TAG_NAME"
+        docker build . --tag ghcr.io/jpf91/rsyslog-journal:$TAG_NAME
+        docker push ghcr.io/jpf91/rsyslog-journal:$TAG_NAME
