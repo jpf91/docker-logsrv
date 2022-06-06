@@ -19,6 +19,7 @@ jobs:
     - name: cockpit-journal Image Build
       run: |
         if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        cd docker-cockpit-journal
         echo "Building jpf91/cockpit-journal:$TAG_NAME"
         docker build . --tag ghcr.io/jpf91/cockpit-journal:$TAG_NAME
         docker push ghcr.io/jpf91/cockpit-journal:$TAG_NAME
@@ -26,6 +27,7 @@ jobs:
     - name: journal-remote Image Build
       run: |
         if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        cd docker-journal-remote
         echo "Building jpf91/journal-remote:$TAG_NAME"
         docker build . --tag ghcr.io/jpf91/journal-remote:$TAG_NAME
         docker push ghcr.io/jpf91/journal-remote:$TAG_NAME
@@ -33,6 +35,7 @@ jobs:
     - name: rsyslog-journal Image Build
       run: |
         if [[ "$GITHUB_REF_NAME" == "master" ]]; then export TAG_NAME="latest"; else export TAG_NAME="$GITHUB_REF_NAME"; fi
+        cd docker-rsyslog-journal
         echo "Building jpf91/rsyslog-journal:$TAG_NAME"
         docker build . --tag ghcr.io/jpf91/rsyslog-journal:$TAG_NAME
         docker push ghcr.io/jpf91/rsyslog-journal:$TAG_NAME
