@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Set password from environment
-echo "root:$ROOT_PASSWORD" | chpasswd
+if [ -n "$ROOT_PASSWORD" ]; then
+    echo "root:$ROOT_PASSWORD" | chpasswd
+fi
 
 # TLS is handled by nginx proxy
 exec /usr/libexec/cockpit-ws --no-tls
