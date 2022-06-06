@@ -1,8 +1,7 @@
-name: publish
+name: periodic_v1
 'on':
-  push:
   schedule:
-    - cron: '24 3 * * 2'
+    - cron: '24 4 * * 2'
 
 jobs:
   publish-image:
@@ -11,6 +10,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: v1
 
     - name: GitHub Container Registry Login
       uses: docker/login-action@v1
