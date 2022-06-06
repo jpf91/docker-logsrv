@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   journal:
-    image: "docker.io/library/journal-remote:latest"
+    image: "ghcr.io/jpf91/journal-remote:latest"
     restart: unless-stopped
     hostname: "journal"
     volumes:
@@ -10,7 +10,7 @@ services:
       - "19532:19532"
 
   syslog:
-    image: "docker.io/library/rsyslog-journal:latest"
+    image: "ghcr.io/jpf91/rsyslog-journal:latest"
     restart: unless-stopped
     hostname: "syslog"
     depends_on:
@@ -25,7 +25,7 @@ services:
 #      - ".data/rsyslog.cert.pem:/etc/rsyslog.cert.pem"
 
   cockpit:
-    image: "docker.io/library/cockpit-journal:latest"
+    image: "ghcr.io/jpf91/cockpit-journal:latest"
     restart: unless-stopped
     hostname: "cockpit"
     environment:
