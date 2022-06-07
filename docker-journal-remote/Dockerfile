@@ -12,5 +12,5 @@ RUN mkdir /var/log/journal/remote
 
 # Get some logs from journal-remote
 ENV SYSTEMD_LOG_LEVEL notice
-# TLS is handled by nginx proxy, so we don't have to worry about certificate updates
-ENTRYPOINT [ "/usr/lib/systemd/systemd-journal-remote", "--listen-http=19532" ]
+ENTRYPOINT [ "/usr/lib/systemd/systemd-journal-remote", \
+    "--listen-https=19532", "--key=/etc/journal-remote.key", "--cert=/etc/journal-remote.crt", "--trust=/etc/journal-remote.ca.crt" ]

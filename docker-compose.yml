@@ -6,6 +6,9 @@ services:
     hostname: "journal"
     volumes:
       - ./data/journal:/var/log/journal/remote:z
+      - "./data/cert/ca.crt:/etc/journal-remote.ca.crt:z"
+      - "./data/cert/logsrv.key:/etc/journal-remote.key:z"
+      - "./data/cert/logsrv.crt:/etc/journal-remote.crt:z"
     ports:
       - "19532:19532"
 
@@ -19,10 +22,10 @@ services:
       - "514:514"
       - "6514:6514"
       - "514:514/udp"
-#    volumes:
-#      - ".data/rsyslog.ca.pem:/etc/rsyslog.ca.pem"
-#      - ".data/rsyslog.key.pem:/etc/rsyslog.key.pem"
-#      - ".data/rsyslog.cert.pem:/etc/rsyslog.cert.pem"
+    volumes:
+      - "./data/cert/ca.crt:/etc/rsyslog.ca.crt:z"
+      - "./data/cert/logsrv.key:/etc/rsyslog.key:z"
+      - "./data/cert/logsrv.crt:/etc/rsyslog.crt:z"
 
   cockpit:
     image: "ghcr.io/jpf91/cockpit-journal:latest"
