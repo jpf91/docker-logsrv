@@ -42,6 +42,24 @@ openssl req -new -sha256 -key client-hostname.key -out client-hostname.csr
 openssl x509 -req -in client-hostname.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client-hostname.crt -sha256
 ```
 
+## Adjusting the cockpit remote origin
+
+If you're using a procy in front of cockpit, you'll probably have to change the cockpit configuration
+to allow this external origin.
+
+Create the configuration `data/cockpit.conf` with this content:
+
+```ini
+[WebService]
+Origins = https://logs.example.com
+```
+
+Then add the volume mount to the `cockpit` entry in `docker-compose.yml`:
+
+```
+- "./data/cockpit.conf:/etc/cockpit/cockpit.conf:Z"
+```
+
 ## Running
 
 
