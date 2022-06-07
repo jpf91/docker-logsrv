@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   journal:
-    image: "ghcr.io/jpf91/journal-remote:latest"
+    image: "ghcr.io/jpf91/journal-remote:v1"
     restart: unless-stopped
     hostname: "journal"
     volumes:
@@ -13,7 +13,7 @@ services:
       - "19532:19532"
 
   syslog:
-    image: "ghcr.io/jpf91/rsyslog-journal:latest"
+    image: "ghcr.io/jpf91/rsyslog-journal:v1"
     restart: unless-stopped
     hostname: "syslog"
     depends_on:
@@ -28,7 +28,7 @@ services:
       - "./data/cert/logsrv.crt:/etc/rsyslog.crt:z"
 
   cockpit:
-    image: "ghcr.io/jpf91/cockpit-journal:latest"
+    image: "ghcr.io/jpf91/cockpit-journal:v1"
     restart: unless-stopped
     hostname: "cockpit"
     environment:
