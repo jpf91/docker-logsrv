@@ -4,21 +4,21 @@ To build the `journal-remote` container:
 
 ```bash
 cd docker-journal-remote
-docker build . -t journal-remote
+docker build . -t ghcr.io/jpf91/journal-remote:latest
 ```
 
 To build the `rsyslog-journal` container:
 
 ```bash
 cd docker-rsyslog-journal
-docker build . -t rsyslog-journal
+docker build . -t ghcr.io/jpf91/rsyslog-journal:latest
 ```
 
 To build the `cockpit-journal` container:
 
 ```bash
 cd docker-cockpit-journal
-docker build . -t cockpit-journal
+docker build . -t ghcr.io/jpf91/cockpit-journal:latest
 ```
 
 ## Running
