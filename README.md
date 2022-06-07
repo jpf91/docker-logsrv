@@ -42,6 +42,9 @@ openssl req -new -sha256 -key client-hostname.key -out client-hostname.csr
 openssl x509 -req -in client-hostname.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client-hostname.crt -sha256
 ```
 
+Note: Do not set the same CN for the CA certificate and for your logsrv certificate, otherwise rsyslog will think
+it's self-signed and complain! For the CA just use a CN such as `Foo LTD Log CA`.
+
 ## Adjusting the cockpit remote origin
 
 If you're using a procy in front of cockpit, you'll probably have to change the cockpit configuration
@@ -90,13 +93,13 @@ The Timestamp should be a unix timestamp in microseconds (Use `date +%s` and app
 ### Syslog TCP
 
 ```bash
-logger -n 127.0.0.1 -P 514 --tcp "Test message"
+logger -n 127.0.0.1 -P 514 --tcp "Test message TCP"
 ```
 
 ### Syslog UDP
 
 ```bash
-logger -n 127.0.0.1 -P 514 "Test message"
+logger -n 127.0.0.1 -P 514 "Test message UDP"
 ```
 
 ## Related Links
