@@ -21,7 +21,29 @@ cd docker-cockpit-journal
 docker build . -t ghcr.io/jpf91/cockpit-journal:latest
 ```
 
+## Generating certificates
+
+```bash
+cd data/certs
+
+# Setup the CA key
+openssl ecparam -name prime256v1 -genkey -noout -out ca.key
+openssl req -new -x509 -sha256 -key ca.key -out ca.crt
+openssl x509 -in ca.crt -noout -text
+
+# Setup the log server key
+openssl ecparam -name prime256v1 -genkey -noout -out logsrv.key
+openssl req -new -sha256 -key logsrv.key -out logsrv.csr
+openssl x509 -req -in logsrv.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out logsrv.crt -sha256
+
+# For each client:
+openssl ecparam -name prime256v1 -genkey -noout -out client-hostname.key
+openssl req -new -sha256 -key client-hostname.key -out client-hostname.csr
+openssl x509 -req -in client-hostname.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client-hostname.crt -sha256
+```
+
 ## Running
+
 
 The images use privileged ports, so to run them using podman, you'll have to use the root mode system socket:
 
