@@ -50,8 +50,6 @@ docker-compose up
 
 ## Setting up clients
 
-### Using journal-remote
-
 First, create a client certificate in the `data/cert` folder:
 
 ```bash
@@ -65,6 +63,8 @@ Copy the files to the remote host:
 * `$CLIENT_HOSTNAME.key` => `/etc/ssl/certs/journal-upload.key`
 * `$CLIENT_HOSTNAME.crt` => `/etc/ssl/certs/journal-upload.crt`
 * `ca.crt` => `/etc/ssl/certs/journal-upload-ca.crt`
+
+### Using journal-remote
 
 Install package:
 ```bash
@@ -98,6 +98,41 @@ TrustedCertificateFile=/etc/ssl/certs/journal-upload-ca.crt
 And start the upload daemon:
 ```bash
  systemctl enable --now systemd-journal-upload
+```
+
+### Using rsyslogd
+
+Install package:
+```bash
+ dnf install rsyslog rsyslog-gnutls
+ ```
+
+Adjust the permissions, to make sure only root can read the certs:
+```bash
+chmod 640 /etc/ssl/certs/journal-upload.key
+chown root:root /etc/ssl/certs/journal-upload.key
+chmod 640 /etc/ssl/certs/journal-upload.crt
+chown root:root /etc/ssl/certs/journal-upload.crt
+chmod 640 /etc/ssl/certs/journal-upload-ca.crt
+chown root:root /etc/ssl/certs/journal-upload-ca.crt
+```
+
+Configure `/etc/rsyslog.conf`:
+```ini
+# Our CA for logs.example.com
+$DefaultNetStreamDriverCAFile /etc/ssl/certs/journal-upload-ca.crt
+$DefaultNetstreamDriverCertFile /etc/ssl/certs/journal-upload.crt
+$DefaultNetstreamDriverKeyFile /etc/ssl/certs/journal-upload.key
+$DefaultNetStreamDriver gtls
+$ActionSendStreamDriverMode 1
+$ActionSendStreamDriverAuthMode anon
+
+*.*     @@(o)logs.example.com:6514
+```
+
+And start the upload daemon:
+```bash
+ systemctl enable --now rsyslog
 ```
 
 ## Development setup
