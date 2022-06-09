@@ -1,4 +1,103 @@
-## Building containers
+# docker-logsrv
+
+## Running the log server
+
+### Generating certificates
+
+```bash
+cd data/cert
+
+# Setup the CA key
+openssl ecparam -name prime256v1 -genkey -noout -out ca.key
+openssl req -new -x509 -sha256 -key ca.key -out ca.crt
+openssl x509 -in ca.crt -noout -text
+
+# Setup the log server key
+openssl ecparam -name prime256v1 -genkey -noout -out logsrv.key
+openssl req -new -sha256 -key logsrv.key -out logsrv.csr
+openssl x509 -req -in logsrv.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out logsrv.crt -sha256
+```
+
+Note: Do not set the same CN for the CA certificate and for your logsrv certificate, otherwise rsyslog will think
+it's self-signed and complain! For the CA just use a CN such as `Foo LTD Log CA`.
+
+## Configuring cockpit
+
+If you're using a proxy in front of cockpit, you'll probably have to change the cockpit configuration
+to allow an external origin.
+
+Create the configuration `data/cockpit.conf` with this content:
+
+```ini
+[WebService]
+Origins = https://logs.example.com
+```
+You may also want to add `LoginTo = false` to remote the remote connect option from the login page.
+
+Then add the volume mount to the `cockpit` entry in `docker-compose.yml`:
+
+```
+- "./data/cockpit.conf:/etc/cockpit/cockpit.conf:Z"
+```
+
+### Running
+
+To run everything:
+
+```bash
+docker-compose up
+```
+
+## Setting up clients
+
+### Using journal-remote
+
+First, create a client certificate in the `data/cert` folder:
+
+```bash
+export CLIENT_HOSTNAME=foo.example.com
+openssl ecparam -name prime256v1 -genkey -noout -out $CLIENT_HOSTNAME.key
+openssl req -new -sha256 -key $CLIENT_HOSTNAME.key -out $CLIENT_HOSTNAME.csr
+openssl x509 -req -in $CLIENT_HOSTNAME.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out $CLIENT_HOSTNAME.crt -sha256
+```
+
+Copy the files to the remote host:
+* `$CLIENT_HOSTNAME.key` => `/etc/ssl/certs/journal-upload.key`
+* `$CLIENT_HOSTNAME.crt` => `/etc/ssl/certs/journal-upload.crt`
+* `ca.crt` => `/etc/ssl/certs/journal-upload-ca.crt`
+
+Create a user for the `systemd-journald-upload` service, so that it can access the cert files:
+```bash
+adduser --system --home-dir /run/systemd --no-create-home --shell /usr/sbin/nologin --user-group systemd-journal-upload
+```
+
+Adjust the permissions, to make sure only root and journald user can read the certs:
+```bash
+chmod 640 /etc/ssl/certs/journal-upload.key
+chown root:systemd-journal-upload /etc/ssl/certs/journal-upload.key
+chmod 640 /etc/ssl/certs/journal-upload.crt
+chown root:systemd-journal-upload /etc/ssl/certs/journal-upload.crt
+chmod 640 /etc/ssl/certs/journal-upload-ca.crt
+chown root:systemd-journal-upload /etc/ssl/certs/journal-upload-ca.crt
+```
+
+Configure `/etc/systemd/journal-upload.conf`:
+```ini
+[Upload]
+URL=https://logsrv.example.com:19532
+ServerKeyFile=/etc/ssl/certs/journal-upload.key
+ServerCertificateFile=/etc/ssl/certs/journal-upload.crt
+TrustedCertificateFile=/etc/ssl/certs/journal-upload-ca.crt
+```
+
+And start the upload daemon:
+```bash
+ systemctl enable --now systemd-journal-upload
+```
+
+## Development setup
+
+### Building containers locally
 
 To build the `journal-remote` container:
 
@@ -21,76 +120,19 @@ cd docker-cockpit-journal
 docker build . -t ghcr.io/jpf91/cockpit-journal:latest
 ```
 
-## Generating certificates
+### Sending test data to the journal
 
-```bash
-cd data/certs
-
-# Setup the CA key
-openssl ecparam -name prime256v1 -genkey -noout -out ca.key
-openssl req -new -x509 -sha256 -key ca.key -out ca.crt
-openssl x509 -in ca.crt -noout -text
-
-# Setup the log server key
-openssl ecparam -name prime256v1 -genkey -noout -out logsrv.key
-openssl req -new -sha256 -key logsrv.key -out logsrv.csr
-openssl x509 -req -in logsrv.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out logsrv.crt -sha256
-
-# For each client:
-openssl ecparam -name prime256v1 -genkey -noout -out client-hostname.key
-openssl req -new -sha256 -key client-hostname.key -out client-hostname.csr
-openssl x509 -req -in client-hostname.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client-hostname.crt -sha256
-```
-
-Note: Do not set the same CN for the CA certificate and for your logsrv certificate, otherwise rsyslog will think
-it's self-signed and complain! For the CA just use a CN such as `Foo LTD Log CA`.
-
-## Adjusting the cockpit remote origin
-
-If you're using a procy in front of cockpit, you'll probably have to change the cockpit configuration
-to allow this external origin.
-
-Create the configuration `data/cockpit.conf` with this content:
-
-```ini
-[WebService]
-Origins = https://logs.example.com
-```
-
-Then add the volume mount to the `cockpit` entry in `docker-compose.yml`:
+This sends some test data directly to the journal, using TLS and certificates:
 
 ```
-- "./data/cockpit.conf:/etc/cockpit/cockpit.conf:Z"
-```
-
-## Running
-
-
-The images use privileged ports, so to run them using podman, you'll have to use the root mode system socket:
-
-```bash
-sudo -i
-export DOCKER_HOST=unix:///var/run/podman/podman.sock
-```
-
-To run everything using podman or docker:
-
-```bash
-docker-compose up
-```
-
-## Testing
-
-### Sending data to the journal
-```
-curl http://127.0.0.1:19532/upload \
+curl https://127.0.0.1:19532/upload \
    -H 'Content-Type: application/vnd.fdo.journal'  \
-   --data-binary $'__REALTIME_TIMESTAMP=1654518724000000\n_HOSTNAME=test-host\nMESSAGE=Test message\n\n' -v
+   --data-binary $'__REALTIME_TIMESTAMP=1654518724000000\n_HOSTNAME=test-host\nMESSAGE=Test message\n\n' --insecure --key /path/to/hostname.key --cert /path/to/hostname.crt -v
 ```
 
-The Timestamp should be a unix timestamp in microseconds (Use `date +%s` and append `000000`).
+The Timestamp should be a unix timestamp in microseconds (Use `date +%s` and append `000000`). For the client certs `hostname.key` / `hostname.crt` you can either use client certs as explained above or you can just use the `logsrv` key.
 
-### Syslog TCP
+### Unencrypted Syslog TCP
 
 ```bash
 logger -n 127.0.0.1 -P 514 --tcp "Test message TCP"
