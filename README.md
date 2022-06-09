@@ -130,6 +130,16 @@ $ActionSendStreamDriverAuthMode anon
 *.*     @@(o)logs.example.com:6514
 ```
 
+Here's something specific to your docker setup: If you let docker map IPv6 requests to the containers IPv4,
+the syslog will not see the real remote address but that of the docker container.
+This will set the log entry hostname to your docker host. 
+As a workarount, force the client rsyslog to use IPv4:
+
+`/etc/sysconfig/rsyslog`:
+```
+SYSLOGD_OPTIONS="-4"
+```
+
 And start the upload daemon:
 ```bash
  systemctl enable --now rsyslog
