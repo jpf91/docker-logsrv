@@ -66,6 +66,11 @@ Copy the files to the remote host:
 * `$CLIENT_HOSTNAME.crt` => `/etc/ssl/certs/journal-upload.crt`
 * `ca.crt` => `/etc/ssl/certs/journal-upload-ca.crt`
 
+Install package:
+```bash
+ dnf install systemd-journal-remote
+ ```
+
 Create a user for the `systemd-journald-upload` service, so that it can access the cert files:
 ```bash
 adduser --system --home-dir /run/systemd --no-create-home --shell /usr/sbin/nologin --user-group systemd-journal-upload
